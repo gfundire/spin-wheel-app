@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roulette Wheel with Central Circle</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+    }
+
+    canvas {
+      border: 2px solid #000;
+    }
+
+    .number {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="rouletteWheel" width="400" height="400"></canvas>
+  <button onclick="spinWheel()">Spin</button>
+  <script>
+    const canvas = document.getElementById('rouletteWheel');
+    const ctx = canvas.getContext('2d');
+
+     document.addEventListener("DOMContentLoaded", (event) => drawWheel());
+
+    const colors = ['red', 'black'];
+    const numSectors = 36;
+    const sectorAngle = (2 * Math.PI) / numSectors;
+    const radius = canvas.width / 2 - 20; // Leave some space for the numbers
+    const spinDuration = 10000; // milliseconds
+    const centralCircleDiameter = radius; // Diameter of the central circle
+
+    let currentAngle = 0;
+    let targetAngle = 0;
+    let spinning = false;
+
+    function drawWheel() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw wheel sectors
+      for (let i = 0; i < numSectors; i++) {
+        const colorIndex = i % 2;
+        const startAngle = (currentAngle + i * sectorAngle) % (2 * Math.PI);
+        const endAngle = (currentAngle + (i + 1) * sectorAngle) % (2 * Math.PI);
+        
+        ctx.beginPath();
+        ctx.moveTo(canvas.width / 2, canvas.height / 2);
+        ctx.arc(canvas.width / 2, canvas.height / 2, radius, startAngle, endAngle);
+        ctx.closePath();
+        ctx.fillStyle = colors[colorIndex];
+        ctx.fill();
+
+        // Calculate position for number
+        const angle = (startAngle + endAngle) / 2;
+        const x = canvas.width / 2 + (radius - 10) * Math.cos(angle);
+        const y = canvas.height / 2 + (radius - 10) * Math.sin(angle);
+
+        ctx.fillStyle = 'white';
+        ctx.fillText(i + 1, x, y);
+      }
+
+      // Draw central circle
+      ctx.beginPath();
+      ctx.arc(canvas.width / 2, canvas.height / 2, centralCircleDiameter / 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'black';
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function spinWheel() {
+      if (!spinning) {
+        targetAngle += Math.PI * 2 * (Math.random() * 5 + 5); // Rotate between 5 to 10 revolutions
+        spinning = true;
+        animate();
+      }
+    }
+
+    function animate() {
+      const startTime = Date.now();
+
+      function animationLoop() {
+        const elapsedTime = Date.now() - startTime;
+        const progress = Math.min(elapsedTime / spinDuration, 1);
+        currentAngle = easeOutCubic(progress) * (targetAngle - currentAngle);
+
+        drawWheel();
+
+        if (progress < 1) {
+          requestAnimationFrame(animationLoop);
+        } else {
+          currentAngle %= Math.PI * 2; // Normalize angle
+          spinning = false;
+        }
+      }
+
+      requestAnimationFrame(animationLoop);
+    }
+
+    // Easing function for smooth animation
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+  </script>
+</body>
+</html>
